@@ -201,3 +201,4 @@ new flatify(this, {"cont":true}).seq(function(error, callback){
 });
 //The second job was never called because it was deleted by the first job.
 ```
+More examples can be found in the tests/testflatify.js file.
