@@ -164,7 +164,7 @@ new flatify(this).seq(function(error, callback){
 	});
 }).run(function(error){
 	console.log(this.test1); //Outputs "ABC"
-	console.log(this.test1); //Outputs "DEF"
+	console.log(this.test2); //Outputs "DEF"
 });
 ```
 
