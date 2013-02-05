@@ -8,7 +8,7 @@ var output = function(str){
 	}
 	if (isBrowser){
 		document.write(str+"<br />");
-	};
+	}
 };
 var assert = {
 	strictEqual : function(param1, param2){
