@@ -1,6 +1,6 @@
 # flatifyJS
 
-Flatify is a simple, recursive and powerful dynamic flow management library for asynchronous Javascript and Node.JS. It was built to make callback heavy code, modular easy to read, write and maintain; in other words, to avoid going to [Callback Hell](http://elm-lang.org/learn/Escape-from-Callback-Hell.elm). Compared to the popular Async library, flatify has much more advanced fine tuning for concurrency features, but none of Async's collections and other utilities.
+Flatify is a simple, recursive and powerful dynamic flow management library for asynchronous Javascript and Node.JS. It was built to make callback heavy code, modular easy to read, write and maintain; in other words, to avoid going to [Callback Hell](http://www.google.com/search?q=callback+hell). Compared to the popular Async library, flatify has much more advanced fine tuning for concurrency features, but none of Async's collections and other utilities.
 
 ## Basic features
 
@@ -53,6 +53,8 @@ Just import it!
 
 ## Methods
 
+Every method that doesn't return a value returns "this" to make calls chainable.
+
 ### .seq(job, options, index)
 
 Options and index are optional.
@@ -85,11 +87,15 @@ __Index__: Same as previously.
 
 Flatify starts going through the job queue.
 
-__Job__: this is the final job, it will be called once Flatify has gone through the whole queue. It is mandatory.
+__Job__: this is the final job, it will be called once flatify has reached the end of the queue. It is mandatory.
 
 ### .getIndex()
 
 Returns the current job queue index.
+
+### .setNextIndex(index)
+
+Sets the job queue index. After the current job finishes, the queue will continue at that index. Warning: it's easy to create infinite loops by backtracking without checks. Read the Advanced Features section for more information.
 
 ### .getNumberJobs()
 
@@ -97,7 +103,32 @@ Returns the number of jobs in the job queue.
 
 ### .deleteJob(index)
 
-Removes the job at the specified index.
+Removes the job at the specified index. To add a job at a specific index, use the seq() and par() methods. Read the Advanced Features section for more information.
+
+### .getContext()
+
+Returns the internal execution context. Read the Advanced Features section for more information.
+
+### .pause()
+
+The current job will finish, but the next one won't be called. If the curent job was the last one in the queue, the "exit job" (the one supplied to the run() method) will be called.
+
+### .resume()
+
+Resumes execution after calling pause().
+
+### .isStarted()
+
+Returns true if run() has been called, false otherwise.
+
+### .isPaused()
+
+Returns true if pause() has been called, false otherwise.
+
+### .isFinished()
+
+Returns true if the "exit job" (the run() one) has been called.
+
 
 ## Advanced features
 

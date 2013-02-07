@@ -10,7 +10,6 @@
 			scope = {};
 		}
 		self.level = 0;
-		self._runCallbackCalled = false;
 		self.parentInstance = null;
 		//Default scope object
 		self._scope = {
@@ -38,22 +37,53 @@
 		self.wait = self.defaultOptions.wait;
 		
 		self._index = 0;
+		self._nextIndex = null;
 		self._steps = [];
-		self._callback = function(){};
+		self._runCallbackCalled = false;
+		self._callback = null;
+		self._paused = false;
+		self._resume = null;
 		
 		return self;
 	};
 	_flatify.prototype.getIndex = function(){
-		var self = this;
-		return self._index;
+		return this._index;
+	};
+	_flatify.prototype.setNextIndex = function(nextIndex){
+		this._nextIndex = nextIndex;
+		return this;
 	};
 	_flatify.prototype.getNumberJobs = function(){
-		var self = this;
-		return self._steps.length;
+		return this._steps.length;
 	};
 	_flatify.prototype.deleteJob = function(pos){
-		var self = this;
-		self._steps.splice(pos, 1);
+		this._steps.splice(pos, 1);
+		return this;
+	};
+	_flatify.prototype.getContext = function(){
+		return this._scope;
+	};
+	_flatify.prototype.pause = function(){
+		if (this._callback !== null){ //Do nothing if run hasn't been called
+			this._paused = true;
+		}
+		return this;
+	};
+	_flatify.prototype.resume = function(){
+		if (this._callback !== null && this._paused){ //Do nothing if run hasn't been called or not paused
+			this._paused = false;
+			this._resume();
+		}
+		return this;
+	};
+	_flatify.prototype.isStarted = function(){
+		return !!this._callback;
+	};
+	_flatify.prototype.isPaused = function(){
+		return this._paused;
+	};
+	_flatify.prototype.isFinished = function(){
+		return this._runCallbackCalled;
 	};
 	_flatify.prototype.seq = function(job, options, pos){
 		var self = this;
@@ -99,36 +129,50 @@
 	};
 	_flatify.prototype.run = function(callback){
 		var self = this;
-		self._callback = callback;
-		if (self._steps.length === 0){
-			callback(null);
-		}else{
-			self._exec(null, []);
+		if (self._callback === null && typeof callback === "function"){ //Do nothing if run has been called previously
+			self._callback = callback;
+			if (self._steps.length === 0){
+				callback(null);
+			}else{
+				self._exec(null, []);
+			}
 		}
 		return self;
 	};
 	_flatify.prototype._exec = function(error, params){
 		var self = this;
 		//Move up one level if needed
-		if (self._scope.flatify.currentInstance._runCallbackCalled){
+		if (self._scope.flatify.currentInstance._runCallbackCalled){ //If true, scope.flatify.currentInstance needs to be changed
 			self._scope.flatify.currentInstance = self._scope.flatify.currentInstance.parentInstance;
 		}
-		//Call the right function on the job
-		if ((error && !self.cont) || self._index === self._steps.length){
-			self._execRun(error, params);
+		//Check if pausing
+		if (self._paused){
+			self._resume = (function(error, params){
+				return function(){
+					self._exec(error, params);
+				};
+			})(error, params);
 		}else{
-			self.cont = self._steps[self._index].options.cont; //Set flag for current job
-			if (self._steps[self._index].par){
-				self.wait = self._steps[self._index].options.wait;
-				self._execPar(error, params, function(error, params){
-					self._index++;
-					self._exec(error, params);
-				});
+			//Call either execRun, execSeq or execPar
+			if ((error && !self.cont) || self._index === self._steps.length){
+				self._execRun(error, params);
 			}else{
-				self._execSeq(error, params, function(error, params){
-					self._index++;
+				var callback = function(error, params){
+					if (self._nextIndex !== null && self._steps[self._nextIndex] !== undefined){ //setNextIndex() was called
+						self._index = self._nextIndex;
+						self._nextIndex = null;
+					}else{
+						self._index++;
+					}
 					self._exec(error, params);
-				});
+				}
+				self.cont = self._steps[self._index].options.cont; //Set flag for current job
+				if (self._steps[self._index].par){
+					self.wait = self._steps[self._index].options.wait;
+					self._execPar(error, params, callback);
+				}else{
+					self._execSeq(error, params, callback);
+				}
 			}
 		}
 	};

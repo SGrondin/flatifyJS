@@ -12,14 +12,16 @@ var output = function(str){
 };
 var nbAsserts = 0;
 var assert = {
-	strictEqual : function(param1, param2){
+	strictEqual : function(param1, param2, display){
 		nbAsserts++;
 		if (param1 !== param2){
 			var error = "ASSERT FAIL. "+param1+" !== "+param2;
 			output(error);
 			throw error;
 		}else{
-			output(param1+" === "+param2);
+			if (display){
+				output(param1+" === "+param2);
+			}
 		}
 	}
 };
@@ -127,7 +129,7 @@ new flatify(this, {"cont":true}).seq(function(error, callback){
 	assert.strictEqual(error, "!!!");
 });
 
-//Test index
+//Test getIndex
 new flatify(this, {"cont":true}).seq(function(error, callback){
 	this.flatify.currentInstance.seq(function(error, callback){
 		assert.strictEqual(error, "error 1");
@@ -139,6 +141,28 @@ new flatify(this, {"cont":true}).seq(function(error, callback){
 	callback("error 3");
 }).run(function(error){
 	assert.strictEqual(error, "error 3");
+});
+
+//Test setIndex
+new flatify(this).seq(function(error, callback){
+	if (!this.reset){
+		this.reset = false;
+		this.nbSeq = 0;
+	}
+	this.nbSeq++;
+	callback(null);
+}).seq(function(error, callback){
+	this.nbSeq++;
+	callback(null);
+}).seq(function(error, callback){
+	this.nbSeq++;
+	if (!this.reset){
+		this.reset = true;
+		this.flatify.currentInstance.setNextIndex(0);
+	}
+	callback(null);
+}).run(function(error){
+	assert.strictEqual(this.nbSeq, 6);
 });
 
 //Delete job
@@ -153,6 +177,82 @@ new flatify(this, {"cont":true}).seq(function(error, callback){
 }).run(function(error){
 	assert.strictEqual(error, "error 3");
 });
+
+//Test getContext, pause/resume, isFinished, isPaused, invalid pause/resume/run
+
+var instance = new flatify(this).seq(function(error, callback){
+	var context = this;
+	setTimeout(function(){
+		context.i = 1;
+		callback(null);
+	}, 100);
+}).seq(function(error, callback){
+	var context = this;
+	setTimeout(function(){
+		context.i++;
+		callback(null);
+	}, 100);
+}).seq(function(error, callback){
+	var context = this;
+	setTimeout(function(){
+		context.i++;
+		callback(null);
+	}, 100);
+}).seq(function(error, callback){
+	var context = this;
+	setTimeout(function(){
+		context.i++;
+		callback(null);
+	}, 100);
+});
+
+assert.strictEqual(instance.isStarted(), false);
+assert.strictEqual(instance.isPaused(), false);
+assert.strictEqual(instance.isFinished(), false);
+instance.resume(); //Useless resume
+assert.strictEqual(instance.isStarted(), false);
+assert.strictEqual(instance.isPaused(), false);
+assert.strictEqual(instance.isFinished(), false);
+instance.pause(); //Useless Pause
+assert.strictEqual(instance.isStarted(), false);
+assert.strictEqual(instance.isPaused(), false);
+assert.strictEqual(instance.isFinished(), false);
+instance.resume(); //Useless resume
+assert.strictEqual(instance.isStarted(), false);
+assert.strictEqual(instance.isPaused(), false);
+assert.strictEqual(instance.isFinished(), false);
+instance.run(function(error){
+	assert.strictEqual(this.i, 4);
+});
+assert.strictEqual(instance.isStarted(), true);
+assert.strictEqual(instance.isPaused(), false);
+assert.strictEqual(instance.isFinished(), false);
+
+
+setTimeout(function(){
+	instance.resume(); //Useless resume
+	assert.strictEqual(instance.isStarted(), true);
+	assert.strictEqual(instance.isPaused(), false);
+	assert.strictEqual(instance.isFinished(), false);
+	instance.pause(); //PAUSE
+	assert.strictEqual(instance.isStarted(), true);
+	assert.strictEqual(instance.isPaused(), true);
+	assert.strictEqual(instance.isFinished(), false);
+	assert.strictEqual(instance.getContext().i, 2);
+	setTimeout(function(){
+		instance.resume(); //RESUME
+		assert.strictEqual(instance.isStarted(), true);
+		assert.strictEqual(instance.isPaused(), false);
+		assert.strictEqual(instance.isFinished(), false);
+		setTimeout(function(){
+			assert.strictEqual(instance.getContext().i, 4);
+			assert.strictEqual(instance.isStarted(), true);
+			assert.strictEqual(instance.isPaused(), false);
+			assert.strictEqual(instance.isFinished(), true);
+		}, 1000);
+	}, 1000);
+}, 220);
+
 
 //DOCUMENTATION EXAMPLES
 new flatify(this).seq(function(error, callback){
@@ -188,5 +288,5 @@ new flatify(this).seq(function(error, callback){
 
 
 setTimeout(function(){
-	console.log("OK  "+nbAsserts+" asserts");
-}, 2200);
+	console.log("OK  "+nbAsserts+" asserts passed");
+}, 5000);
