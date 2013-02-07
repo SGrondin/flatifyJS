@@ -1,6 +1,6 @@
 # flatifyJS
 
-Flatify is a simple, recursive and powerful dynamic flow management library for asynchronous Javascript and Node.JS. It was built to make callback heavy code, modular easy to read, write and maintain; in other words, to avoid going to [Callback Hell](http://www.google.com/search?q=callback+hell). Compared to the popular Async library, flatify has much more advanced fine tuning for concurrency features, but none of Async's collections and other utilities.
+Flatify is a simple, recursive and powerful dynamic flow management library for asynchronous Javascript and Node.JS. It was built to make callback heavy code, modular easy to read, write and maintain; in other words, to avoid going to [Callback Hell](http://www.google.com/search?q=callback+hell). Compared to the popular [async](https://github.com/caolan/async) and [step](https://github.com/creationix/step) libraries, flatify offer much more advanced fine tuning for concurrency features and dynamic flow execution, but none of Async's collections and other utilities.
 
 ## Basic features
 
