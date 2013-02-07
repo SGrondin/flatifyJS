@@ -151,7 +151,7 @@
 		for (var i=0;i<nbSteps;i++){
 			outputs[i] = [];
 			errors[i] = null;
-			params[callbackIndex] = (function(i, indexA){ //To keep the outputs array ordered the same way the user entered the jobs
+			params[callbackIndex] = (function(i, index){ //To keep the outputs array ordered the same way the user entered the jobs
 				return function(error){
 					outputs[i] = Array.prototype.slice.call(arguments, 1);
 					errors[i] = error;
@@ -159,7 +159,7 @@
 						errorTrue = true;
 					}
 					returned++;
-					if ((returned === self._steps[indexA].job.length || (error && !self.wait)) && !callbackCalled){
+					if ((returned === self._steps[index].job.length || (error && !self.wait)) && !callbackCalled){
 						callbackCalled = true;
 						if (!errorTrue){
 							errors = null;
