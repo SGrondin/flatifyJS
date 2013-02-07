@@ -79,13 +79,13 @@ Keys:
 * "nb" (integer). If Jobs is a single function, "nb" is the number of times it must be run in parallel. Default is 1.
 * "wait" (boolean). If set to true and one of the parallel jobs returns an error, flatify will wait for all jobs to complete before continuing.
 
-__Index__ Same as previously.
+__Index__: Same as previously.
 
 ### .run(job)
 
 Flatify starts going through the job queue.
 
-__Job__: this is the final job and will be called once Flatify has gone through the whole queue. It is mandatory.
+__Job__: this is the final job, it will be called once Flatify has gone through the whole queue. It is mandatory.
 
 ### .getIndex()
 

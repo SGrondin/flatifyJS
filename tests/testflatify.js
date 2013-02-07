@@ -10,8 +10,10 @@ var output = function(str){
 		document.write(str+"<br />");
 	}
 };
+var nbAsserts = 0;
 var assert = {
 	strictEqual : function(param1, param2){
+		nbAsserts++;
 		if (param1 !== param2){
 			var error = "ASSERT FAIL. "+param1+" !== "+param2;
 			output(error);
@@ -186,5 +188,5 @@ new flatify(this).seq(function(error, callback){
 
 
 setTimeout(function(){
-	console.log("OK");
+	console.log("OK  "+nbAsserts+" asserts");
 }, 2200);

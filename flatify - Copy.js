@@ -1,4 +1,4 @@
-"v1.1.0";
+"v1.0.0";
 (function(){
 	"use strict";
 	var _flatify = function(scope, options){
@@ -15,7 +15,7 @@
 		//Default scope object
 		self._scope = {
 			"flatify" : {
-				"version" : "v1.1.0",
+				"version" : "v1.0.0",
 				"masterInstance" : self,
 				"currentInstance" : self
 			}
@@ -37,7 +37,7 @@
 		self.cont = self.defaultOptions.cont;
 		self.wait = self.defaultOptions.wait;
 		
-		self._index = 0;
+		self._stepsRan = 0;
 		self._steps = [];
 		self._callback = function(){};
 		
@@ -45,7 +45,7 @@
 	};
 	_flatify.prototype.getIndex = function(){
 		var self = this;
-		return self._index;
+		return self._stepsRan;
 	};
 	_flatify.prototype.getNumberJobs = function(){
 		var self = this;
@@ -103,31 +103,32 @@
 		if (self._steps.length === 0){
 			callback(null);
 		}else{
-			self._exec(null, []);
+			self._exec(0, null, []);
 		}
 		return self;
 	};
-	_flatify.prototype._exec = function(error, params){
+	_flatify.prototype._exec = function(index, error, params){
 		var self = this;
 		//Move up one level if needed
 		if (self._scope.flatify.currentInstance._runCallbackCalled){
 			self._scope.flatify.currentInstance = self._scope.flatify.currentInstance.parentInstance;
 		}
 		//Call the right function on the job
-		if ((error && !self.cont) || self._index === self._steps.length){
+		if ((error && !self.cont) || self._stepsRan === self._steps.length){
 			self._execRun(error, params);
 		}else{
-			self.cont = self._steps[self._index].options.cont; //Set flag for current job
-			if (self._steps[self._index].par){
-				self.wait = self._steps[self._index].options.wait;
-				self._execPar(error, params, function(error, params){
-					self._index++;
-					self._exec(error, params);
+			if (index !== self._stepsRan){con(">>>>A"+index+"  "+self._stepsRan);}
+			self.cont = self._steps[index].options.cont; //Set flag for current job
+			if (self._steps[index].par){
+				self.wait = self._steps[index].options.wait;
+				self._execPar(index, error, params, function(error, params){
+					self._stepsRan++;
+					self._exec(++index, error, params);
 				});
 			}else{
-				self._execSeq(error, params, function(error, params){
-					self._index++;
-					self._exec(error, params);
+				self._execSeq(index, error, params, function(error, params){
+					self._stepsRan++;
+					self._exec(++index, error, params);
 				});
 			}
 		}
@@ -138,7 +139,7 @@
 		params.unshift(error);
 		self._callback.apply(self._scope, params);
 	};
-	_flatify.prototype._execPar = function(error, params, callback){
+	_flatify.prototype._execPar = function(index, error, params, callback){
 		var self = this;
 		params.unshift(error);
 		var callbackIndex = params.length; //Used to always replace the callback, but keep the same params for all the branches
@@ -147,8 +148,9 @@
 		var errorTrue = false; //At least one job had an error, so return the errors array instead of just null
 		var returned = 0;
 		var callbackCalled = false;
-		var nbSteps = self._steps[self._index].job.length;
-		for (var i=0;i<nbSteps;i++){
+		if (index !== self._stepsRan){con(">>>>B"+index+"  "+self._stepsRan);}
+		for (var i=0;i<self._steps[index].job.length;i++){
+			if (index !== self._stepsRan){con(">>>>C"+index+"  "+self._stepsRan);}
 			outputs[i] = [];
 			errors[i] = null;
 			params[callbackIndex] = (function(i, indexA){ //To keep the outputs array ordered the same way the user entered the jobs
@@ -159,7 +161,8 @@
 						errorTrue = true;
 					}
 					returned++;
-					if ((returned === self._steps[indexA].job.length || (error && !self.wait)) && !callbackCalled){
+					con(">>>>D    indexA: "+indexA+"  index: "+index+" stepsRan: "+self._stepsRan);
+					if ((returned === self._steps[index].job.length || (error && !self.wait)) && !callbackCalled){
 						callbackCalled = true;
 						if (!errorTrue){
 							errors = null;
@@ -167,17 +170,19 @@
 						callback(errors, [outputs]);
 					}
 				};
-			})(i, self._index);
-			self._steps[self._index].job[i].apply(self._scope, params);
+			})(i, self._stepsRan);
+			if (index !== self._stepsRan){con(">>>>E"+index+"  "+self._stepsRan);}
+			self._steps[index].job[i].apply(self._scope, params);
 		}
 	};
-	_flatify.prototype._execSeq = function(error, params, callback){
+	_flatify.prototype._execSeq = function(index, error, params, callback){
 		var self = this;
 		params.unshift(error);
 		params.push(function(error){
 			callback(error, Array.prototype.slice.call(arguments, 1));
 		});
-		self._steps[self._index].job.apply(self._scope, params);
+		if (index !== self._stepsRan){con(">>>>F"+index+"  "+self._stepsRan);}
+		self._steps[index].job.apply(self._scope, params);
 	};
 	
 	if (typeof module === "object" && typeof exports === "object"){//Node.js
