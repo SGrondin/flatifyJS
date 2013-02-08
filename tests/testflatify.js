@@ -145,8 +145,8 @@ new flatify(this, {"cont":true}).seq(function(error, callback){
 
 //Test setIndex
 new flatify(this).seq(function(error, callback){
-	if (!this.reset){
-		this.reset = false;
+	if (!this.secondPass){
+		this.secondPass = false;
 		this.nbSeq = 0;
 	}
 	this.nbSeq++;
@@ -156,8 +156,8 @@ new flatify(this).seq(function(error, callback){
 	callback(null);
 }).seq(function(error, callback){
 	this.nbSeq++;
-	if (!this.reset){
-		this.reset = true;
+	if (!this.secondPass){
+		this.secondPass = true;
 		this.flatify.currentInstance.setNextIndex(0);
 	}
 	callback(null);
@@ -184,12 +184,17 @@ var instance = new flatify(this).seq(function(error, callback){
 	var context = this;
 	setTimeout(function(){
 		context.i = 1;
-		callback(null);
+		callback("error 1", "param 1", "param 2", "param 3", "param 4");
 	}, 100);
-}).seq(function(error, callback){
+}, {"cont":true}).seq(function(error, p1, p2, p3, p4, callback){
 	var context = this;
 	setTimeout(function(){
 		context.i++;
+		assert.strictEqual(error, "error 1");
+		assert.strictEqual(p1, "param 1");
+		assert.strictEqual(p2, "param 2");
+		assert.strictEqual(p3, "param 3");
+		assert.strictEqual(p4, "param 4");
 		callback(null);
 	}, 100);
 }).seq(function(error, callback){
